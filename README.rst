@@ -14,8 +14,7 @@ Quick start
         'calc',
     )
 
-2. Add values for email sending to your EMAIL_USE_TLS, EMAIL_HOST and
-    EMAIL_PORT setting like this::
+2. Add values for email sending to your EMAIL_USE_TLS, EMAIL_HOST and EMAIL_PORT setting like this::
 
     EMAIL_USE_TLS = True
     EMAIL_HOST = 'smtp.gmail.com'
