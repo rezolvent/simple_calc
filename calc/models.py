@@ -43,16 +43,16 @@ class CalcResult(models.Model):
         time_of_result = datetime.now()
 
         if error_msg == "":
-            e_message = u"Операция {0} выполнена успешно\n"
-            e_message = e_message.format(expression, time_of_result)
+            e_message = u'Операция "{0}" выполнена успешно (Результат: {1})\n'
+            e_message = e_message.format(expression, ans)
             cls.objects.create(result=ans,
                                message=e_message,
                                time=time_of_result)
         else:
             e_message = u'{0}\n Выражение: "{1}"\n'.format(error_msg, expression)
 
-        cls.send_msg(e_data, e_message)
         e_message += u'Время: {0}'.format(time_of_result)
+        cls.send_msg(e_data, e_message)
         json_data = json.dumps({"value": ans, "errorMsg": error_msg})
 
         return json_data
