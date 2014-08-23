@@ -15,37 +15,82 @@
         <script type="text/javascript" src="{% static 'js/calc.js' %}"></script>
     </head>
     <body>
-        <div class="container calculator panel panel-warning">
-            <div class="panel-heading main-field">
-                <input type="text" name="field" readonly>
+        <form action='' method='post'>{% csrf_token %}
+            <nav class="navbar navbar-default" role="navigation">
+                <ul class="nav navbar-nav">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle btn" data-toggle="dropdown">{{ menu_title }}<span class="caret"></span></a>
+                            <ul class="dropdown-menu" role="menu">
+                                <li>
+                                    <div class="container-fluid">
+                                        <span class="label label-info">От кого</span>
+                                    <p></p>
+                                        {{ form.email_from.errors }}
+                                            <input id="id_email_from" type="email" class="form-control" placeholder="E-mail" name="email_from">
+                                        {{ form.email_from }}
+                                    <p></p>
+                                        {{ form.password.errors }}
+                                            <input type="password" class="form-control" placeholder="Пароль" name="password">
+                                        {{ form.password }}
+                                    </div>
+                                </li>
+                                <li class="divider"></li>
+                                <li>
+                                    <div class="container-fluid">
+                                        <span class="label label-info">Кому</span>
+                                        <p></p>
+                                        {{ form.email_to.errors }}
+                                            <input type="email" class="form-control" placeholder="E-mail" name="email_to">
+                                        {{ form.email_to }}
+                                    </div>
+                                </li>
+                                <li class="divider"></li>
+                                <li>
+                                    <div class="container-fluid">
+                                        <input type='submit' class="btn btn-default btn-block" id="get-mails" value="OK"></a>
+                                    </div>
+                                </li>
+                            </ul>
+                    </li>
+                </ul>
+            </nav>
+        </form>
+
+        {% if calc_enabled %}
+            <div class="container calculator panel panel-warning">
+                <div class="panel-heading main-field">
+                    <input type="text" name="field" readonly>
+                </div>
+                <div class="panel-body">
+                    <table>
+                        {% for row in calc_struct %}
+                            <tr class="row">
+                                {% for col in row %}
+                                    <td>
+                                        {% if col.type != "" %}
+                                            <button class="btn btn-block {{col.type}}" data-{{col.type}}="{{col.key}}">
+                                                <span class="fa-stack">
+                                                    {% if col.type == "number" %}
+                                                        {{ col.value }}
+                                                    {% else %}
+                                                        {% include col.value %}
+                                                    {% endif %}
+                                                </span>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
             </div>
-            <div class="panel-body">
-                <table>
-                    {% for row in calc_struct %}
-                        <tr class="row">
-                            {% for col in row %}
-                                <td>
-                                    {% if col.type != "" %}
-                                        <button class="btn btn-block {{col.type}}" data-{{col.type}}="{{col.key}}">
-                                            <span class="fa-stack">
-                                                {% if col.type == "number" %}
-                                                    {{ col.value }}
-                                                {% else %}
-                                                    {% include col.value %}
-                                                {% endif %}
-                                            </span>
-                                        </button>
-                                    {% endif %}
-                                </td>
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </table>
+            <div class="container-fluid text-center hidden" id="ev-error">
+                <div class="alert alert-danger" role="alert"></div>
             </div>
-        </div>
-        <div class="container-fluid text-center hidden" id="ev-error">
-            <div class="alert alert-danger" role="alert">Ололо</div>
-        </div>
+        {% else %}
+            <span class="label label-primary">Пожалуйста, заполните поля ввода е-мейлов для начала работы с калькулятором в меню "{{menu_title}}"</span>
+        {% endif %}
     </body>
 
 </html>

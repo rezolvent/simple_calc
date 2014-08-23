@@ -1,24 +1,25 @@
 $(document).ready(function () {
-    field = $(".main-field")[0].children[0];
-    mValue = "0";
-    clearField = function(){
-        dotAvalable = true;
+    if ($(".main-field").length > 0){
+        field = $(".main-field")[0].children[0];
         mValue = "0";
-        field.value = mValue;
+        clearField = function(){
+            dotAvalable = true;
+            mValue = "0";
+            field.value = mValue;
+        }
+        clearField();
+        // Обработка цифр и точки
+        $(".number").on('click', function(event) {
+            if (mValue=="0"){
+                mValue = $(this).data("number");
+            }
+            else{
+                mValue = field.value + $(this).data("number");
+            }
+            field.value = mValue
+            hideError();
+        });
     }
-    clearField();
-
-    // Обработка цифр и точки
-    $(".number").on('click', function(event) {
-        if (mValue=="0"){
-            mValue = $(this).data("number");
-        }
-        else{
-            mValue = field.value + $(this).data("number");
-        }
-        field.value = mValue
-        hideError();
-    });
    // Обработка символов
     $(".symbol").on('click', function(event) {
         sym = $(this).data("symbol")
@@ -59,6 +60,12 @@ $(document).ready(function () {
         field.value = mValue;
     });
 
+    // $('#get-mails').on('click', function(event){
+    //     mailFrom
+    //     $.get(
+    //         )
+    // });
+
     hideError = function(){
         errItem = $("#ev-error")[0];
         if (errItem.className.indexOf("hidden") < 0){
@@ -69,11 +76,17 @@ $(document).ready(function () {
     response = function(r){
         field.value = mValue = r.value;
         if (r.errorMsg!= ""){
+            // alert(r.errorMsg);
             errItem = $("#ev-error")[0];
             errItem.children[0].textContent = r.errorMsg;
             errItem.className = errItem.className.replace("hidden", "");
         }
     }
 
+    $(function () {
+            $('.dropdown-menu input').click(function (event) {
+                event.stopPropagation();
+            });
+        });
 });
 

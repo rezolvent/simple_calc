@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
-from django.shortcuts import render, render_to_response
-from calc_lib import NumericStringParser
+from django.shortcuts import render_to_response
+from calc.forms import ContactForm
 from calc.models import CalcResult
 from django.http import HttpResponse
-from datetime import datetime
-from django.core.mail import send_mail
-
-import threading
-import json
+from django.views.decorators.csrf import csrf_protect
+from django.core.context_processors import csrf
 
 
 def calc(request):
+    enabled = False
+    form = ContactForm()
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            enabled = True
+            print u'valid!'
     calc_struct = [
         [
             pd("(", None, "symbol"),
@@ -18,20 +22,26 @@ def calc(request):
             pd("←", None, "symbol"),
             pd("c", None, "symbol")
         ],
-        map(pd, [7,8,9])+[pd("/", None, "symbol")],
-        map(pd, [4,5,6])+[pd("*", None, "symbol")],
-        map(pd, [1,2,3])+[pd("-", None, "symbol")],
+        map(pd, [7, 8, 9])+[pd("/", None, "symbol")],
+        map(pd, [4, 5, 6])+[pd("*", None, "symbol")],
+        map(pd, [1, 2, 3])+[pd("-", None, "symbol")],
         [pd(0), pd(".", None, "symbol"),
-                pd("=", None, "symbol"),
-                pd("+", None, "symbol")],
+            pd("=", None, "symbol"),
+            pd("+", None, "symbol")],
     ]
-    return render_to_response('calc.html',
-        {'calc_struct':calc_struct,
-        'sheet_title':'Calculator'})
+    context = {'calc_struct': calc_struct,
+               'sheet_title': 'Calculator',
+               'menu_title': u"Ввести Email'ы",
+               'csrf_protect': csrf_protect,
+               'calc_enabled': enabled,
+               'form': form}
+    request.session['email_data'] = form.data
+    context.update(csrf(request))
+    return render_to_response('calc.html', context)
+
 
 def pd(_key, _value=None, _type="number"):
     """ a,b,c -> {type:a, key:b, value:c}"""
-    
     symbol_templates = {
         '-': 'minus.html',
         '/': 'divide.html',
@@ -52,39 +62,13 @@ def pd(_key, _value=None, _type="number"):
     else:
         _value = _value if not (_value is None) else _key
 
-    _type = _type if _key!="" else ""
+    _type = _type if _key != "" else ""
     d = dict(type=_type, key=_key, value=_value)
     return d
 
-def send_mail_wrap(*args):
-    send_mail(*args,
-              fail_silently=False)
 
 def do_calculate(request):
     field = request.GET.get('field', None)
-    ans = -1
-    errorMsg = ""
-    if not field is None:
-        try:
-            ans = round(NumericStringParser().eval(field), 10)
-        except:
-            ans = field
-            errorMsg = u"Ошибка! Не верное выражение."
-    time_of_result = datetime.now()
-    if errorMsg=="":
-        em_message = u"Операция {0} выполнена успешно\n"
-        em_message = em_message.format(field, time_of_result)
-        CalcResult.objects.create(result=ans, message=em_message, time=time_of_result)
-    else:
-        em_message = u'{0}\n Выражение: "{1}"\n'.format(errorMsg, field)
-    em_message += u'Время: {0}'.format(time_of_result)
-    json_data = json.dumps({"value":ans, "errorMsg":errorMsg})
-
-    smt = threading.Thread(target=send_mail_wrap,
-        args=(u'Результат вычисления',
-              em_message,
-              'from@example.com',
-              ['to@example.com']))
-    smt.start()
-
+    email_data = request.session['email_data']
+    json_data = CalcResult.get_result(field, email_data)
     return HttpResponse(json_data, mimetype="application/json")
